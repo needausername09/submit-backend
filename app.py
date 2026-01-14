@@ -1,25 +1,28 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-import subprocess, tempfile
-
-app = FastAPI()
-
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import subprocess
+import tempfile
 
 app = FastAPI()
 
+# CORS (bắt buộc cho Netlify / browser)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # cho phép mọi frontend (ok cho nội bộ)
-    allow_credentials=True,
-    allow_methods=["*"],          # cho phép POST, OPTIONS, v.v.
+    allow_origins=["*"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 class Code(BaseModel):
     code: str
 
+# Route test backend sống
+@app.get("/")
+def root():
+    return {"status": "backend is running"}
+
+# Route chạy code
 @app.post("/run")
 def run_code(data: Code):
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
@@ -32,4 +35,7 @@ def run_code(data: Code):
         text=True,
         timeout=3
     )
-    return {"output": result.stdout + result.stderr}
+
+    return {
+        "output": result.stdout + result.stderr
+    }
